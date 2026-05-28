@@ -12,14 +12,14 @@ const CONFIG = {
     combat: { comboDecay: 180 }
 };
 
-// СКИНЫ
+// СКИНЫ (Медный рыцарь переименован в Колхозный Козёл)
 const CHEST_SKINS = [
-    { id: 'copper', name: 'Медный рыцарь', color: '#B87333', chance: 40 },
+    { id: 'copper', name: 'Колхозный Козёл', color: '#B87333', chance: 40 },
     { id: 'sapphire', name: 'Сапфировый страж', color: '#0f52ba', chance: 25 },
     { id: 'magma', name: 'Магмовый голем', color: '#FF4500', chance: 15 },
     { id: 'royal', name: 'Королевский легион', color: '#FFD700', chance: 10 },
     { id: 'blackghost', name: 'Чёрный призрак', color: '#111111', chance: 5, darkEdges: true },
-    { id: 'halfyear', name: 'Полгода Колблоксу', color: '#ffaa44', chance: 3, particleNumber: '05' },
+    { id: 'halfyear', name: 'Полгода Колблоксу', color: '#ffaa44', chance: 3, particleNumber: '05', festive: true },
     { id: 'kaleidoscope', name: 'Калейдоскоп', color: '#ff00ff', chance: 1, kaleidoscope: true },
     { id: 'sixseven', name: 'Сикс Севен', color: '#4488ff', chance: 1, text: '67' },
     { id: 'cone', name: 'Конус', color: '#00aa44', chance: 1, shape: 'cone' }
@@ -50,7 +50,7 @@ const SPRING_SKINS = [
     { id: 'rose_aura', name: 'Розовая аура', chance: 15, isAura: true },
     { id: 'spring_aura', name: 'Весенняя аура', chance: 10, isAura: true },
     { id: 'sapphire', name: 'Сапфировый страж', chance: 5, isAura: false, skinId: 'sapphire' },
-    { id: 'copper', name: 'Медный рыцарь', chance: 5, isAura: false, skinId: 'copper' }
+    { id: 'copper', name: 'Колхозный Козёл', chance: 5, isAura: false, skinId: 'copper' }
 ];
 
 // ELITE КЕЙС
@@ -824,17 +824,19 @@ class Player {
         
         const skinData = getSkinData(equippedSkin);
         // Частицы для скина Полгода Колблоксу
-        if (skinData.particleNumber && hitSomething) {
-            for (let i = 0; i < 15; i++) {
+        if (skinData.festive && hitSomething) {
+            for (let i = 0; i < 25; i++) {
                 safeTimeout(() => {
                     const particle = document.createElement('div');
                     particle.className = 'skin-particle-05';
-                    particle.textContent = skinData.particleNumber;
-                    particle.style.left = (centerX - cameraX - 30 + Math.random() * 60) + 'px';
-                    particle.style.top = (centerY - 30 + Math.random() * 60) + 'px';
+                    particle.textContent = Math.random() > 0.5 ? '05' : '🎂';
+                    particle.style.left = (centerX - cameraX - 40 + Math.random() * 80) + 'px';
+                    particle.style.top = (centerY - 40 + Math.random() * 80) + 'px';
+                    particle.style.fontSize = (Math.random() * 10 + 10) + 'px';
+                    particle.style.color = ['#ffaa44', '#ff3366', '#33ff66', '#ffcc00'][Math.floor(Math.random() * 4)];
                     document.body.appendChild(particle);
-                    safeTimeout(() => particle.remove(), 1000);
-                }, i * 15);
+                    safeTimeout(() => particle.remove(), 1200);
+                }, i * 12);
             }
         }
         // Частицы для скина Сикс Севен
@@ -884,6 +886,7 @@ class Player {
     
     drawShape(ctx, x, y, w, h, skin) {
         let useDarkEdges = false;
+        // Чёрный призрак - тёмно-серые грани при получении урона или использовании ауры (как в прошлой версии)
         if (skin.id === 'blackghost') {
             useDarkEdges = (this.invulnerable > 0 || this.swingEffect > 0 || equippedAura !== null);
         }
@@ -900,6 +903,7 @@ class Player {
             ctx.closePath();
             ctx.fillStyle = mainColor;
             ctx.fill();
+            // Обычное лицо как у всех
             ctx.fillStyle = '#222';
             ctx.fillRect(x + w/2 - 4, y + 10, 8, 8);
             ctx.fillRect(x + w/2 - 4, y + 22, 8, 8);
@@ -907,59 +911,117 @@ class Player {
             return;
         }
         
-        // Сикс Севен (цифра 67 на весь скин)
-        if (skin.text === '67') {
+        // Сикс Севен (цифра 67 + нормальное лицо)
+        if (skin.id === 'sixseven') {
             ctx.fillStyle = mainColor;
             ctx.fillRect(x, y, w, h);
+            // Цифра 67 на всю высоту, но не перекрывает глаза
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 32px monospace';
+            ctx.font = 'bold 28px monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('67', x + w/2, y + h/2);
-            ctx.fillStyle = '#222';
-            ctx.fillRect(x + w/2 - 12, y + 8, 6, 6);
-            ctx.fillRect(x + w/2 + 6, y + 8, 6, 6);
-            ctx.fillRect(x + w/2 - 10, y + 28, 20, 3);
-            return;
-        }
-        
-        // Полгода Колблоксу (с надписью)
-        if (skin.id === 'halfyear') {
-            ctx.fillStyle = mainColor;
-            ctx.fillRect(x, y, w, h);
+            ctx.fillText('67', x + w/2, y + h/2 - 5);
+            // Нормальное лицо (глаза и рот как у всех)
             ctx.fillStyle = '#222';
             ctx.fillRect(x + 10, y + 10, 6, 6);
             ctx.fillRect(x + 24, y + 10, 6, 6);
-            ctx.fillStyle = '#222';
-            ctx.fillRect(x + 10, y + 28, 20, 3);
-            ctx.fillStyle = '#222';
-            ctx.font = 'bold 9px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText('нам полгода', x + w/2, y + 22);
+            ctx.fillRect(x + 12, y + 28, 16, 3);
             return;
         }
         
-        // Обычный квадрат (без серых контуров)
-        ctx.fillStyle = mainColor;
-        ctx.fillRect(x, y, w, h);
+        // Полгода Колблоксу (праздничный скин с нормальным лицом и деталями)
+        if (skin.id === 'halfyear') {
+            ctx.fillStyle = mainColor;
+            ctx.fillRect(x, y, w, h);
+            
+            // Праздничный узор (конфетти)
+            ctx.fillStyle = '#ff3366';
+            ctx.fillRect(x + 5, y + 5, 4, 4);
+            ctx.fillStyle = '#33ff66';
+            ctx.fillRect(x + 31, y + 5, 4, 4);
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(x + 18, y + 3, 4, 4);
+            ctx.fillStyle = '#ff66cc';
+            ctx.fillRect(x + 5, y + 32, 4, 4);
+            ctx.fillStyle = '#66ccff';
+            ctx.fillRect(x + 31, y + 32, 4, 4);
+            
+            // Нормальные глаза
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x + 10, y + 10, 6, 6);
+            ctx.fillRect(x + 24, y + 10, 6, 6);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x + 12, y + 12, 2, 2);
+            ctx.fillRect(x + 26, y + 12, 2, 2);
+            
+            // Рот (улыбка)
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x + 12, y + 28, 16, 3);
+            
+            // Праздничная надпись
+            ctx.fillStyle = '#ff3366';
+            ctx.font = 'bold 7px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎂', x + w/2, y + 22);
+            ctx.fillStyle = '#222';
+            ctx.font = 'bold 6px monospace';
+            ctx.fillText('6 МЕСЯЦЕВ', x + w/2, y + 36);
+            
+            // Ленточки по бокам
+            ctx.beginPath();
+            ctx.moveTo(x, y + 15);
+            ctx.lineTo(x - 3, y + 20);
+            ctx.lineTo(x, y + 25);
+            ctx.fillStyle = '#ff3366';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(x + w, y + 15);
+            ctx.lineTo(x + w + 3, y + 20);
+            ctx.lineTo(x + w, y + 25);
+            ctx.fill();
+            return;
+        }
         
-        // Глаза и рот (без зрачков, кроме чёрного призрака)
+        // Чёрный призрак (светлые глаза, тёмные грани при уроне)
         if (skin.id === 'blackghost') {
+            ctx.fillStyle = mainColor;
+            ctx.fillRect(x, y, w, h);
+            // Тёмно-серые грани при получении урона
+            if (useDarkEdges) {
+                ctx.fillStyle = '#444444';
+                ctx.fillRect(x, y, w, 3);
+                ctx.fillRect(x, y + h - 3, w, 3);
+                ctx.fillRect(x, y, 3, h);
+                ctx.fillRect(x + w - 3, y, 3, h);
+            }
+            // Глаза (белые, как у призрака)
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(x + 10, y + 10, 8, 8);
             ctx.fillRect(x + 22, y + 10, 8, 8);
             ctx.fillStyle = '#000000';
             ctx.fillRect(x + 12, y + 12, 4, 4);
             ctx.fillRect(x + 24, y + 12, 4, 4);
+            // Рот
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(x + 10, y + 25, 20, 4);
-        } else {
-            ctx.fillStyle = '#222';
-            ctx.fillRect(x + 10, y + 10, 8, 8);
-            ctx.fillRect(x + 22, y + 10, 8, 8);
-            ctx.fillStyle = '#222';
-            ctx.fillRect(x + 10, y + 25, 20, 4);
+            return;
         }
+        
+        // Обычный квадрат (для всех остальных скинов)
+        ctx.fillStyle = mainColor;
+        ctx.fillRect(x, y, w, h);
+        
+        // Глаза и рот
+        ctx.fillStyle = '#222';
+        ctx.fillRect(x + 10, y + 10, 8, 8);
+        ctx.fillRect(x + 22, y + 10, 8, 8);
+        ctx.fillStyle = '#222';
+        ctx.fillRect(x + 10, y + 25, 20, 4);
+        
+        // Белые блики в глазах
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x + 12, y + 12, 3, 3);
+        ctx.fillRect(x + 24, y + 12, 3, 3);
     }
     
     draw(ctx, cameraX) {
